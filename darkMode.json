@@ -1,0 +1,13 @@
+[
+	{
+		"id":"$dm00",
+		"type":"data",
+		"script":"#LuaWrapper",
+		"meta":{
+			"luawrapper":{
+				"script":"dm.lua",
+				"dev":false
+			}
+		}
+	}
+]
