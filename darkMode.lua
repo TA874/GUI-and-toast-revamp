@@ -17,7 +17,7 @@ function script:settings()
 			name = "Dark UI mode",
 			value = darkMode.darkMode or 0,
 			values = {0, 1, 2},
-			valueNames = {"a", "b", "c"},
+			valueNames = {"Off", "On", "System default"},
 			onChange = function(v)
 				darkMode.darkMode = v
 			end
