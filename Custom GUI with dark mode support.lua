@@ -1079,7 +1079,7 @@ function script:enterStage()
 	GUI.addLayout=addLayout
 	addSlider=function(self,tbl)
 		local minValue=tbl.minValue or 0
-		local maxValue=tbl.maxValue or 10
+		local maxValue=tbl.maxValue or 1
 		local v,bt,pb=0
 		return self:addPanel{
 			width=tbl.width,
@@ -1306,9 +1306,26 @@ function script:enterStage()
 					end)
 				end
 				if icon then
-					local iw,ih=Drawing.getImageSize(tbl.icon)
-					local hx,hy=Drawing.getImageHandle(tbl.icon)
-					Drawing.drawImage(tbl.icon,(x+hx)+(w*alignX)-(iw/2),(y+hy)+(h*alignY)-(ih/2))
+					local icon=icon
+					pcall(function()
+						if type(icon)=="table"then
+							local draft=icon
+							pcall(function()
+								icon=draft:getFrame(1)
+							end)
+							pcall(function()
+								icon=City.createDraftDrawer(draft).draw(x,y,w,h)
+							end)
+						end
+					end)
+					icon = icon or 0
+					pcall(function()
+						local iw,ih=Drawing.getImageSize(icon)
+						local hx,hy=Drawing.getImageHandle(icon)
+						iw = math.min(iw, w)
+						ih = math.min(ih, h)
+						Drawing.drawImageRect(icon,math.max(0,(x+hx)+(w*alignX)-(iw/2)),math.max(0,(y+hy)+(h*alignY)-(ih/2)), iw, ih)
+					end)
 				end
 				Drawing.resetClipping()
 			end,
@@ -1366,7 +1383,7 @@ function script:enterStage()
 				end
 				self:addPanel{
 					width=tbl.width or tbl.w or 300,
-					height=tbl.height or tbl.w or 160,
+					height=tbl.height or tbl.h or 160,
 					onUpdate=function(self)
 						if op then
 							if self:getY()>(self:getParent():getClientHeight()/2)-(self:getHeight()/2)then
@@ -1772,11 +1789,12 @@ function script:enterStage()
 				h=30,
 				onInit=function(self)
 					local entry=self:addCanvas{}
-					entry:addCanvas{
+					entry:addIcon{
 						w=30,
+						icon = draft,
 						onDraw=function(self,x,y,w,h)
 							pcall(function()
-								City.createDraftDrawer(draft).draw(x,y,w,h)
+								--City.createDraftDrawer(draft).draw(x,y,w,h)
 							end)
 						end
 					}
@@ -1784,7 +1802,7 @@ function script:enterStage()
 						text=draft:getId(),
 						x=40,
 						onUpdate=function(self)
-							if selected then
+							if selected() then
 								self:setColor(255,255,255)
 							else
 								if darkUIMode()then
@@ -1800,14 +1818,10 @@ function script:enterStage()
 						height=30,
 						icon=Icon.OK,
 						onClick=function(self)
-							if table.find(selection,draft:getId())then
-								self:setIcon(Icon.PLUS)
+							if selected()then
 								table.remove(selection,table.find(selection,draft:getId()))
-								self:setText("")
 							else
-								self:setIcon(0)
 								table.insert(selection,draft:getId())
-								self:setText(table.find(selection,draft:getId()))
 							end
 						end,
 						onUpdate=function(self)
@@ -1823,7 +1837,7 @@ function script:enterStage()
 					}
 				end,
 				onDraw=function(self,x,y,w,h)
-					if selected then
+					if selected() then
 						Drawing.drawNinePatch(NinePatch.LIST_ITEM_SELECTED,x,y,w,h)
 					end
 				end
