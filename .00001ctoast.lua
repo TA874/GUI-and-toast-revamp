@@ -1,4 +1,4 @@
-pcall(function()City.rebuildUI()end)
+pcall(function()City.rebuildUI()end
 local p2,p3,p4,p5=0,0,0,0
 local function drawOutline(x,y,w,h,s)
 	if type(s)~="number" then s=1 end
