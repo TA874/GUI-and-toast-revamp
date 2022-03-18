@@ -232,11 +232,10 @@ local function openGUIExample()
 		local function addLine(label, height)
 			local line=layout:addLayout{height=height}
 			line:addLabel{text=label, w=60}
-			return line:addLayout{ x=62 }
+			return line:addLayout{x=62}
 		end
 	
-		local sliderValue=0.5
-		local buttonValue='B'
+		local sliderValue,buttonValue=0.5,'B'
 	
 		addLine('Icons:', 26)
 		:addIcon{icon=Icon.OK, w=26}
@@ -246,10 +245,10 @@ local function openGUIExample()
 			x=-100,
 			y=10,
 			h=10,
-			onDraw=function(self, x, y, w, h)
+			onDraw=function(self,x,y,w,h)
 				Drawing.setColor(0, 80, 100)
-				Drawing.drawNinePatch(NinePatch.PROGRESS_BAR, x, y, w, h)
-				local progress=Runtime.getTime() / 1000 % 1
+				Drawing.drawNinePatch(NinePatch.PROGRESS_BAR,x,y,w,h)
+				local progress=Runtime.getTime()/1000%1
 				if progress * w >= 10 then
 					Drawing.drawNinePatch(NinePatch.PROGRESS_BAR_FILLED, x, y, progress * w, h)
 				end
@@ -325,13 +324,11 @@ local function openGUIExample()
 				local name=sourceName..'.'..key
 				entry:addCanvas{
 					w=height,
-					onDraw=function(self, x, y, w, h)
-						drawer(item, x, y, w, h)
-					end
+					onDraw=function(self,x,y,w,h) if type(drawer)=="function" then drawer(item,x,y,w,h) end end
 				}
 				entry:addLabel{
 					text=name,
-					x=height + 5,
+					x=height+5,
 					w=-30
 				}:setFont(Font.SMALL)
 				entry:addButton{
@@ -345,18 +342,14 @@ local function openGUIExample()
 				}
 			end
 		end
-		addItems(Icon, Icon.keys, 'Icon', 26, function(item, x, y, w, h)
-			Drawing.drawImage(item, x, y)
-		end)
-		addItems(NinePatch, NinePatch.keys, 'NinePatch', 26, function(item, x, y, w, h)
-			Drawing.drawNinePatch(item, x, y, w, h)
-		end)
-		addItems(Font, Font.keys, 'Font', 26, function(item, x, y, w, h)
+		addItems(Icon, Icon.keys, 'Icon', 26, function(item,x,y,w,h) Drawing.drawImage(item,x,y) end)
+		addItems(NinePatch, NinePatch.keys, 'NinePatch', 26, function(item,x,y,w,h) Drawing.drawNinePatch(item,x,y,w,h) end)
+		addItems(Font, Font.keys, 'Font', 26, function(item,x,y,w,h)
 			Drawing.setColor(0, 0, 0)
-			Drawing.drawText('Abc', x+w/2, y+h/2, item, 0.5, 0.5)
+			Drawing.drawText('Abc',x+w/2,y+h/2,item,0.5, 0.5)
 			Drawing.reset()
 		end)
-		addItems(Keys, Keys.keys, 'Keys', 26, function(item, x, y, w, h) end)
+		addItems(Keys,Keys.keys,'Keys',26)
 	end
 	GUI.createDialog {
 		icon=script:getDraft():getPreviewFrame(),
@@ -364,32 +357,24 @@ local function openGUIExample()
 		text='From here you have access to various examples.\n\rhttps://youtu.be/dQw4w9WgXcQ,',
 		width=250,
 		height=120,
-		onInit=function(self)
-			
-		end,
+		onInit=function(self) end,
 		actions={
 			{
 				id='$menuparent',
 				icon=Icon.HAMBURGER,
 				text='Menu',
 				onClick=function(self)
-					local menu
 					local actions={
 						{icon=Icon.OK,text='A',onClick=function() Debug.toast('yo') end},
 						{icon=Icon.CANCEL,text='B',enabled=false},
 						{icon=Icon.OK,text='C',hotkeys={Keys.CONTROL_LEFT,Keys.SHIFT_LEFT},onClick=function() Debug.toast('ye') end},
-						{icon=Icon.OK,text='D'},
-						{icon=Icon.OK,text='E'},
+						{icon=Icon.OK,text='D'},{icon=Icon.OK,text='E'},
 						{},
 						{icon=Icon.CLOSE,text='Close',hotkeys={Keys.ESCAPE},onClick=self.close}
 					}
 					actions[4].actions=actions
 					actions[5].actions=actions
-					menu={
-						source=GUI.get('$menuparent'),
-						actions=actions
-					}
-					GUI.createMenu(menu)
+					GUI.createMenu{source=GUI.get('$menuparent'),actions=actions}
 				end,
 				autoClose=false
 			},
@@ -410,24 +395,24 @@ local function openGUIExample()
 end
 function script:settings()
 	local tbl={}
-	local tbl2={0}
-	local tbl3={"GUI example"}
+	local tbl2={0,1}
+	local tbl3={"","GUI example"}
 	if TheoTown.SETTINGS.experimentalFeatures then
 		tbl[#tbl+1]={
 			name="Revamp GUI",
 			value=gi and true or false,
 			onChange=function(v) gi=v end
 		}
-		if gi then table.insert(tbl2,1) table.insert(tbl3,"Preferences") end
+		if gi then table.insert(tbl2,2) table.insert(tbl3,"Preferences") end
 	end
 	tbl[#tbl+1]={
 		name="",
-		value=1,
+		value=0,
 		values=tbl2,
 		valueNames=tbl3,
 		onChange=function(v)
-			if v==1 then openSettings2=true
-			elseif v==0 then openGUIExample2=true end
+			if v==2 then openSettings2=true
+			elseif v==1 then openGUIExample2=true end
 		end
 	}
 	return tbl
@@ -1146,7 +1131,7 @@ addListBox=function(self,tbl)
 							local c=self:getChild(i)
 							local ii=function(c) return c:getChildIndex() end
 							Drawing.setColor(giGetColor())
-							Drawing.drawRect(c:getAbsoluteX(),c:getAbsoluteY(),getSize(c))
+							Drawing.drawRect(c:getAbsoluteX(),c:getAbsoluteY(),w,c:getHeight())
 							--if c:getChildIndex()%2==1 then
 							if c:getChildIndex()<self:countChildren()-1 then
 								Drawing.setAlpha(0.3)
@@ -1155,8 +1140,8 @@ addListBox=function(self,tbl)
 								Drawing.drawRect(c:getAbsX(),c:getAbsY()+c:getHeight()-0.5,c:getWidth(),1)
 							end
 							if c:getTouchPoint() or c:isMouseOver() then
-								Drawing.setAlpha(0.2)
-								if c:getTouchPoint() then Drawing.setAlpha(0.3) end
+								Drawing.setAlpha(0.1)
+								if c:getTouchPoint() then Drawing.setAlpha(0.2) end
 								Drawing.setColor(autoGetColor())
 								Drawing.drawRect(c:getAbsoluteX(),c:getAbsoluteY()+0.5,c:getWidth(),c:getHeight()-1)
 							end
