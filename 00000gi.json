@@ -1,0 +1,41 @@
+[{
+	"id":"$00000gi",
+	"type":"animation",
+	"frames":[
+		{
+			"bmp":".npgi.png",
+			"w":2,"h":2,
+			"count":3
+		},
+		{
+			"bmp":".npgi.png",
+			"w":2,"h":2,"y":2,
+			"count":3
+		},
+		{
+			"bmp":".npgi.png",
+			"w":2,"h":2,"y":4,
+			"count":3
+		},
+		{
+			"bmp":".npgi.png",
+			"w":2,"h":2,"x":6,
+			"count":3
+		},
+		{
+			"bmp":".npgi.png",
+			"w":2,"h":2,"x":6,"y":2,
+			"count":3
+		},
+		{
+			"bmp":".npgi.png",
+			"w":2,"h":2,"x":6,"y":4,
+			"count":3
+		}
+	],
+	"script":".00000gi.lua" 
+},{
+	"id":"$00001ctoast",
+	"type":"data",
+	"script":".00001ctoast.lua"
+}]
