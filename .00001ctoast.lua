@@ -36,20 +36,6 @@ table.find=function(tbl,v)
 	end
 	return i,v2
 end
-local function generateId()
-  local s="qwertyuiopasdfghjklzxcvbnm"
-  s=s.."0123456789_-"
-  local tbl,tbl2={},{}
-  for v in s:gmatch(".") do
-    tbl[#tbl+1]=v
-  end
-  for _=1,math.random(10,30) do
-    local v,i=tbl[math.random(1,#tbl)],math.random(0,1)
-    if i==1 then v=v:upper() end
-    tbl2[#tbl2+1]=v
-  end
-  return table.concat(tbl2)
-end
 local function findToast(id)
 	local tbl,i=nil,nil
 	for ii,v in ipairs(toasts) do
@@ -132,7 +118,7 @@ local addToast=function(title,...)
 	local texts={}
 	for i,v in ipairs(table.pack(...)) do texts[i]=tostring(v or "") end
 	local tbl={h=30,title=tostring(title or ""),text=table.concat(texts,"\n"),tt=Runtime.getTime(),att=Runtime.getTime()}
-	tbl.id=generateId()
+	tbl.id=Runtime.getUuid()
 	local e=pcall(function()
 		local l=#toasts
 		local tt=Runtime.getTime()
@@ -163,9 +149,7 @@ local toast=function(...) addToast("Toast",...) end
 function script:buildCityGUI()
 	Debug.toast(Runtime.getStageName())
 end
-function script:lateInit()
-	Debug.toast=toast
-end
+function script:lateInit() Debug.toast=toast end
 function script:enterStage(s)
 	pcall(function() GUI.get("toasts"):delete() end)
 	local tt=Runtime.getTime()
@@ -189,25 +173,12 @@ function script:enterStage(s)
 		end,
 	}:setTouchThrough(true)
 	Debug.toast=toast
-	Debug.toast(s)
+	--Debug.toast(s)
 end
 local fps,ofps,tt=0,0,Runtime.getTime()
 local function mdd()
 	pcall(function() for _,v in pairs(Draft.getDrafts()) do pcall(function()
-		--v.orig={}
-		--v.orig.id=""
-		--v.orig.title=nil
-		--v.orig.text=nil
-		--v.orig.monthlyPrice=-1000000000000000000000000000
-		--v.orig.people=10000000000000
-		--v.orig.price="0"
-		--v.orig.diamondPrice=-1000
-		--v.orig.mapColor.b=0
-		--v.orig.script=""
-		--v.orig.frames={}
-		--v.orig.drawGround=false
-		--v.orig.strictLua=true
-		--v.orig.oneWay=true
+		
 	end) end end)
 end
 mdd()
