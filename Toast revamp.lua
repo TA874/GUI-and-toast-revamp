@@ -1,5 +1,7 @@
 pcall(function()City.rebuildUI()end)
 local p2,p3,p4,p5=0,0,0,0
+local giDraft
+function script:lateInit() giDraft=Draft.getDraft("$00000gi") end
 local function drawOutline(x,y,w,h,s)
 	if type(s)~="number" then s=1 end
 	Drawing.drawRect(x+s,y,w-(s*2),s)
@@ -317,7 +319,7 @@ function script:overlay()
 			if ii==2 then return NinePatch[k] end
 		end
 	end
-	if giShowFPSCounter then
+	if Util.optStorage(TheoTown.getStorage(),giDraft:getId()).showFPSCounter then
 		ott=Runtime.getTime()
 		fps=0
 		local i=ott-tt
@@ -350,7 +352,7 @@ local tbl={}
 local s={{1,""}}
 local s2="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 for v in s2:gmatch(".") do table.insert(tbl,v) end
-local i=1
+local i=1 .
 f=function()
 	local ss ss=function(i) if i<=#s then
 		local vv=s[i]
