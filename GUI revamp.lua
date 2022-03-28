@@ -21,6 +21,7 @@ function script:init()
 	settings.b=settings.b or 255
 	settings.alpha=settings.alpha or 1
 	settings.colorWarmth=settings.colorWarmth or 0
+	settings.showFPSCounter=settings.showFPSCounter and true or false
 end
 local giAddToast=function(...) if type(giAddToast)=="function" then return giAddToast(...) else return Debug.toast(select(2,...)) end end
 isToastRevampEnabled=function() return revampToast end
@@ -83,9 +84,9 @@ local function drawOutline(x,y,w,h,s)
 	Drawing.drawLine(x+w-sx,y+(h-(sy*0.5)),x+sx,y+(h-(sy*0.5)),sy)
 	sx,sy=math.min(s,w*0.5),math.min(s,h*0.5)
 	Drawing.drawRect(x,y,sx,sy)
-	Drawing.drawRect(x,y+h-sy,sx,sy)
-	Drawing.drawRect(x+w-sx,y,sx,sy)
-	Drawing.drawRect(x+w-sx,y+h-sy,sx,sy)
+	Drawing.drawRect(x,y+h-(sy*sy2),sx,sy)
+	Drawing.drawRect(x+w-(sx*sx2),y,sx,sy)
+	Drawing.drawRect(x+w-(sx*sx2),y+h-(sy*sy2),sx,sy)
 end
 local function openSettings()
 	local d=GUI.createDialog {title="Preferences",h=280}
@@ -242,9 +243,7 @@ local function openGUIExample()
 			line:addLabel{text=label, w=60}
 			return line:addLayout{x=62}
 		end
-	
 		local sliderValue,buttonValue=0.5,'B'
-	
 		addLine('Icons:', 26)
 		:addIcon{icon=Icon.OK, w=26}
 		:getParent():addIcon{icon=Icon.CANCEL, w=26}
@@ -257,9 +256,7 @@ local function openGUIExample()
 				Drawing.setColor(0, 80, 100)
 				Drawing.drawNinePatch(NinePatch.PROGRESS_BAR,x,y,w,h)
 				local progress=Runtime.getTime()/1000%1
-				if progress * w >= 10 then
-					Drawing.drawNinePatch(NinePatch.PROGRESS_BAR_FILLED, x, y, progress * w, h)
-				end
+				if progress*w>=10 then Drawing.drawNinePatch(NinePatch.PROGRESS_BAR_FILLED, x, y, progress * w, h) end
 				Drawing.reset()
 			end
 		}
@@ -289,14 +286,12 @@ local function openGUIExample()
 			onClick=function()buttonValue=text end,
 			isPressed=function()return buttonValue==text end
 		} end
-	
 		addLine('Slider:', 26):addSlider{
 			minValue=0,
 			maxValue=1,
 			setValue=function(v) sliderValue=v end,
 			getValue=function() return sliderValue end
 		}
-	
 		addLine('Text field:', 26):addTextField{
 			text='Hello World ',
 			w=-40
@@ -306,7 +301,6 @@ local function openGUIExample()
 			text='Show',
 			onClick=function(self) Debug.toast('Input is: '..self:getParent():getChild(1):getText()) end
 		}
-	
 		addLine('Text frame:', 40):addTextFrame{
 			text=[[This is a long text
 	that can even span over multiple lines 
@@ -317,8 +311,7 @@ local function openGUIExample()
 		--dialog.content=dialog.content:setParent(GUI.getRoot())
 	end
 	local function showResourcesDialog()
-		local function createIconPreview(parent, frame)
-		end
+		local function createIconPreview(parent, frame) end
 		local dialog=GUI.createDialog{
 			icon=Icon.DECORATION,
 			title='Resources',
@@ -372,7 +365,7 @@ local function openGUIExample()
 				id='$menuparent',
 				icon=Icon.HAMBURGER,
 				text='Menu',
-				hotkeys={Keys.VOLUME_UP},
+				--hotkeys={Keys.VOLUME_UP},
 				onClick=function(self)
 					local actions={
 						{icon=Icon.OK,text='A',onClick=function() Debug.toast('yo') end},
@@ -432,8 +425,8 @@ function script:settings()
 	}
 	tbl[#tbl+1]={
 		name="Show FPS counter",
-		value=giShowFPSCounter and true or false,
-		onChange=function(v) giShowFPSCounter=v end
+		value=settings.showFPSCounter,
+		onChange=function(v) settings.showFPSCounter=v end
 	}
 	return tbl
 end
@@ -470,119 +463,130 @@ local createDialog
 local createRenaneDialog
 local createSelectDraftDialog
 local drawNinePatch
-addCanvas=function(self,tbl)
-	tbl.id=(tbl.id)
-	if type(tbl.id)=="nil" then tbl.id=tostring(math.random(1,99999999999)) end
-	local p,p2=self,self
-	local type0=""
-	pcall(function() type0=p.type or "" end)
-	pcall(function() while p:getParent() do
-		p=p:getParent()
-		type0=p.type or ""
-		if type0=="listbox" then break end
-	end end)
-	local cx,cy,fx,fy
-	local tbl2=table.copy(tbl)
-	enabled=tbl.enabled or type(tbl.enabled)~="boolean" or type(tbl.enabled)=="nil"
-	tbl2.onInit=function(self,...)
-		self.onInit=tbl2.onInit
-		self.onDraw=tbl2.onDraw
-		self.onUpdate=tbl2.onUpdate
-		self.onClick=tbl2.onClick
-		self.alpha=tbl.alpha
-		self.alpha2=1
-		--ga=function() return 1 end
-		self:setEnabled(enabled)
-		if type(tbl.hotkeys)=="table" then for _,v in pairs(tbl.hotkeys) do if type(v)=="number" then self:addHotkey(v) end end end
-		function self:click(...) if self:isEnabled() and type(tbl.onClick)=="function" then tbl.onClick(self,...) end end
-		--function self:draw()
-		local e,e2,e3,e4=true,nil,true,nil
-		if type(tbl.onInit)=="function" then e,e2=pcall(function(...) tbl.onInit(...) end,self,...) end
-		if type(tbl.onUpdate)=="function" then e3,e4=pcall(function(...) tbl.onUpdate(...) end,self,...) end
-		assert(e,e2)
-		assert(e3,e4)
-	end
-	do local iii=0 tbl2.onUpdate=function(self,...)
-		if self:getTouchPoint() then cx,cy=self:getTouchPoint() iii=iii+1 if iii==1 then fx,fy=self:getTouchPoint() end else iii=0 end
-		pcall(function()
-			local a=self:getParent().alpha
-			if type(a)=="function" then a=a() end
-			a=tonumber(a) or 1
-			local a2=tonumber(self:getParent().alpha2) or 1
-			self.alpha2=math.max(0,math.min(1,a2*a))
-		end)
-		if type(tbl.onUpdate)=="function" then tbl.onUpdate(self,...) end
-	end end
-	tbl2.onDraw=function(self,...)
-		local setAlpha2=Drawing.setAlpha
-		local getAlpha2=Drawing.getAlpha
-		local a=Drawing.getAlpha()
-		setAlpha2(a*self:getAlpha())
-		Drawing.setAlpha=function(aa)
-			a=aa
-			return setAlpha2(a*self:getAlpha())
+addCanvas=function(...)
+	local self,tbl=...
+	if type(self)=="table" and type(tbl)=="table" then
+		tbl.id=(tbl.id)
+		if type(tbl.id)=="nil" then tbl.id=tostring(math.random(1,99999999999)) end
+		local p,p2=self,self
+		local type0=""
+		pcall(function() type0=p.type or "" end)
+		pcall(function() while p:getParent() do
+			p=p:getParent()
+			type0=p.type or ""
+			if type0=="listbox" then break end
+		end end)
+		local cx,cy,fx,fy
+		local tbl2=table.copy(tbl)
+		enabled=tbl.enabled or type(tbl.enabled)~="boolean" or type(tbl.enabled)=="nil"
+		tbl2.onInit=function(self,...)
+			self.onInit=tbl2.onInit
+			self.onDraw=tbl2.onDraw
+			self.onUpdate=tbl2.onUpdate
+			self.onClick=tbl2.onClick
+			self.alpha=tbl.alpha
+			self.alpha2=1
+			--ga=function() return 1 end
+			self:setEnabled(enabled)
+			if type(tbl.hotkeys)=="table" then for _,v in pairs(tbl.hotkeys) do if type(v)=="number" then self:addHotkey(v) end end end
+			function self:click(...) if self:isEnabled() and type(tbl.onClick)=="function" then tbl.onClick(self,...) end end
+			--function self:draw()
+			local e,e2,e3,e4=true,nil,true,nil
+			if type(tbl.onInit)=="function" then e,e2=pcall(function(...) tbl.onInit(...) end,self,...) end
+			if type(tbl.onUpdate)=="function" then e3,e4=pcall(function(...) tbl.onUpdate(...) end,self,...) end
+			assert(e,e2)
+			assert(e3,e4)
 		end
-		Drawing.getAlpha=function(aa) return a end
-		local e if type0=="listbox" then e=pcall(function() Drawing.setClipping(p:getAbsoluteX()+2,p:getAbsoluteY()+2,p:getWidth()-4,p:getHeight()-4) end) end
-		local e2,e3=true if type(tbl.onDraw)=="function" then e2,e3=pcall(function(...) tbl.onDraw(...) end,self,...) end
-		Drawing.setAlpha=setAlpha2
-		Drawing.getAlpha=getAlpha2
-		Drawing.setAlpha(a)
-		--if self:getTouchPoint() then
-		do
-			local r,g,b=Drawing.getColor()
+		do local iii=0 tbl2.onUpdate=function(self,...)
+			if self:getTouchPoint() then cx,cy=self:getTouchPoint() iii=iii+1 if iii==1 then fx,fy=self:getTouchPoint() end else iii=0 end
+			pcall(function()
+				local a=self:getParent().alpha
+				if type(a)=="function" then a=a() end
+				a=tonumber(a) or 1
+				local a2=tonumber(self:getParent().alpha2) or 1
+				self.alpha2=math.max(0,math.min(1,a2*a))
+			end)
+			if type(tbl.onUpdate)=="function" then tbl.onUpdate(self,...) end
+		end end
+		tbl2.onDraw=function(self,...) local e2,e3=true pcall(function(...)
+			local setAlpha2=Drawing.setAlpha
+			local getAlpha2=Drawing.getAlpha
 			local a=Drawing.getAlpha()
-			Drawing.setColor(0,170,255)
-			--Drawing.setAlpha(0.5)
-			Drawing.setAlpha(1)
-			--drawOutline(...)
-			Drawing.setColor(r,g,b)
+			setAlpha2(a*self:getAlpha())
+			Drawing.setAlpha=function(aa)
+				a=aa
+				return setAlpha2(a*self:getAlpha())
+			end
+			Drawing.getAlpha=function(aa) return a end
+			local e if type0=="listbox" then e=pcall(function() Drawing.setClipping(p:getAbsoluteX()+2,p:getAbsoluteY()+2,p:getWidth()-4,p:getHeight()-4) end) end
+			if type(tbl.onDraw)=="function" then e2,e3=pcall(function(...) tbl.onDraw(...) end,self,...) end
+			Drawing.setAlpha=setAlpha2
+			Drawing.getAlpha=getAlpha2
 			Drawing.setAlpha(a)
-		end
-		if e then Drawing.resetClipping() end
-		assert(e2,e3)
-	end
-	--if (type0~="listbox") or tbl2.f then
-	--else tbl2.onDraw,tbl2.onUpdate=nil,nil end
-	tbl2.onClick=function(self,...) if (type0~="listbox") or ((type0=="listbox") and (cx==fx and cy==fy)) then self:click(cx,cy,select(3,...)) end end
-	--local tbl={}
-	local tbl=addCanvas2(self,tbl2)
-	--tbl:delete()
-	--tbl:setSize(30,30)
-	--GUI.getRoot().orig=tbl.orig
-	return tbl
-	--return addCanvas2(self,tbl2)
+			--if self:getTouchPoint() then
+			do
+				--local r,g,b=Drawing.getColor()
+				--local a=Drawing.getAlpha()
+				--Drawing.setColor(0,170,255)
+				--Drawing.setAlpha(0.5)
+				--Drawing.setAlpha(1)
+				--drawOutline(...)
+				--Drawing.setColor(r,g,b)
+				--Drawing.setAlpha(a)
+			end
+			if e then Drawing.resetClipping() end
+		end,...) assert(e2,e3) end
+		--if (type0~="listbox") or tbl2.f then
+		--else tbl2.onDraw,tbl2.onUpdate=nil,nil end
+		tbl2.onClick=function(self,...) if (type0~="listbox") or ((type0=="listbox") and (cx==fx and cy==fy)) then self:click(cx,cy,select(3,...)) end end
+		--local tbl={}
+		local tbl=addCanvas2(self,tbl2)
+		--tbl:delete()
+		--tbl:setSize(30,30)
+		--GUI.getRoot().orig=tbl.orig
+		return tbl
+		--return addCanvas2(self,tbl2)
+	elseif select("#",...)>=2 then error("bad argument #2 table expected, got "..type(tbl))
+	elseif select("#",...)==1 and type(self)=="table" then error("bad argument #2 table expected, got no value")
+	elseif select("#",...)==1 then error("bad argument #1 table expected, got "..type(self))
+	else error("bad argument #1 table expected, got no value") end
 end
-addPanel=function(self,tbl)
-	local tbl2=table.copy(tbl)
-	tbl2.onInit=function(self,...)
-		if type(tbl.onInit)=="function" then tbl.onInit(self,...) end
-	end
-	tbl2.onUpdate=function(self,...)
-		if type(tbl.onUpdate)=="function" then tbl.onUpdate(self,...) end
-	end
-	tbl2.onClick=function(self,...)
-		if type(tbl.onClick)=="function" then tbl.onClick(self,...) end
-	end
-	tbl2.onDraw=function(self,x,y,w,h,...)
-		if type(tbl.onDraw)=="function" then tbl.onDraw(self,x,y,w,h,...) else
-			local p2,p3,p4,p5=self:getPadding()
-			x,y,w,h=x-p2,y-p3,w+p2+p4,h+p3+p5
-			Drawing.setColor(giGetColor())
-			--Drawing.drawRect(x,y,w,h)
-			Drawing.setAlpha(0.7)
-			--Drawing.drawNinePatch(script:getDraft():getFrame(1),x,y,w,h)
-			Drawing.drawRect(x,y,w,h)
-			Drawing.setAlpha(0.5)
-			Drawing.setColor(autoGetColor())
-			--Drawing.drawNinePatch(script:getDraft():getFrame(10),x,y,w,h)
-			drawOutline(x,y,w,h)
-			Drawing.resetClipping()
-			Drawing.reset()
-			x,y,w,h=x+p2,y+p3,w-p2-p4,h-p3-p5
+addPanel=function(...)
+	local self,tbl=...
+	if type(self)=="table" and type(tbl)=="table" then
+		local tbl2=table.copy(tbl)
+		tbl2.onInit=function(self,...)
+			if type(tbl.onInit)=="function" then tbl.onInit(self,...) end
 		end
-	end
-	return self:addCanvas(tbl2)
+		tbl2.onUpdate=function(self,...)
+			if type(tbl.onUpdate)=="function" then tbl.onUpdate(self,...) end
+		end
+		tbl2.onClick=function(self,...)
+			if type(tbl.onClick)=="function" then tbl.onClick(self,...) end
+		end
+		tbl2.onDraw=function(self,x,y,w,h,...)
+			if type(tbl.onDraw)=="function" then tbl.onDraw(self,x,y,w,h,...) else
+				local p2,p3,p4,p5=self:getPadding()
+				x,y,w,h=x-p2,y-p3,w+p2+p4,h+p3+p5
+				Drawing.setColor(giGetColor())
+				--Drawing.drawRect(x,y,w,h)
+				Drawing.setAlpha(0.7)
+				--Drawing.drawNinePatch(script:getDraft():getFrame(1),x,y,w,h)
+				Drawing.drawRect(x,y,w,h)
+				Drawing.setAlpha(0.5)
+				Drawing.setColor(autoGetColor())
+				--Drawing.drawNinePatch(script:getDraft():getFrame(10),x,y,w,h)
+				drawOutline(x,y,w,h)
+				Drawing.resetClipping()
+				Drawing.reset()
+				x,y,w,h=x+p2,y+p3,w-p2-p4,h-p3-p5
+			end
+		end
+		return self:addCanvas(tbl2)
+	elseif select("#",...)>=2 then error("bad argument #2 table expected, got "..type(tbl))
+	elseif select("#",...)==1 and type(self)=="table" then error("bad argument #2 table expected, got no value")
+	elseif select("#",...)==1 then error("bad argument #1 table expected, got "..type(self))
+	else error("bad argument #1 table expected, got no value") end
 end
 addButton=function(self,tbl)
 	local icon,text=tbl.icon,tbl.text
@@ -592,7 +596,9 @@ addButton=function(self,tbl)
 	local ax,ay,font=0.5,0.5
 	local tt=Runtime.getTime()-200
 	local tt2=Runtime.getTime()-200
+	local tt3=Runtime.getTime()-200
 	local ii,ii2=0
+	local ii3=0
 	return self:addCanvas {
 		id=tbl.id,
 		x=tbl.x,y=tbl.y,
@@ -612,7 +618,7 @@ addButton=function(self,tbl)
 					setX(self,s+(self:getWidth()*0.5)-((self:getParent():getWidth()-(s*2))*0.5))
 					setY(self,s+(self:getHeight()*0.5)-((self:getParent():getHeight()-(s*2))*0.5))
 					self:setAlignment(ax,ay)
-					if tostring(text or ""):len()>=1 then
+					if tostring(text or type(text)=="nil" and ""):trim():len()>=1 then
 						setWidth(self,math.min(30-(s*2),self:getWidth()))
 						setX(self,math.min(15,(self:getParent():getWidth()-4)*0.5)-(self:getWidth()*0.5))
 					end
@@ -655,7 +661,7 @@ addButton=function(self,tbl)
 				icon,text=tonumber(icon) or 0,tostring(text or "")
 				iw=Drawing.getImageSize(icon) tw=Drawing.getTextSize(text)
 				if tw>0 then setWidth(self,math.max(self:getWidth(),tw+5)) end
-				if iw>0 and tw>0 then setWidth(self,math.max(self:getWidth(),math.min(30,iw)+tw+20)) end
+				if iw>0 and tw>0 then setWidth(self,math.max(self:getWidth(),math.min(30,self:getHeight(),iw)+tw+15)) end
 			end c()
 			function self:setIcon(v) icon=v c() end
 			function self:setText(v) text=v c() end
@@ -667,36 +673,53 @@ addButton=function(self,tbl)
 			function self:setFont(v) font=v end
 			if type(tbl.onInit)=="function" then tbl.onInit(self,...) end
 		end,
-		onUpdate=function(self,...) setWidth(self,math.max(self:getWidth(),self:getHeight())) if type(tbl.onUpdate)=="function" then tbl.onUpdate(self,...) end end,
+		onUpdate=function(self,...)
+			icon2:setVisible(icon2:getIcon()>=1)
+			text2:setVisible(text2:getText():trim():len()>=1)
+			setWidth(self,math.max(self:getWidth(),self:getHeight()))
+			if type(tbl.onUpdate)=="function" then tbl.onUpdate(self,...) end
+		end,
 		onClick=function(self,...) if not isPressed() then playClickSound() end if type(tbl.onClick)=="function" then tbl.onClick(self,...) end end,
 		onDraw=function(self,x,y,w,h)
+			local r,g,b=Drawing.getColor()
+			local a=Drawing.getAlpha()
 			local cr,cg,cb=giGetColor()
 			local br,bg,bb=autoGetColor()
 			Drawing.setColor(cr,cg,cb)
-			Drawing.setAlpha(0.7)
+			Drawing.setAlpha(a*0.7)
 			--Drawing.drawNinePatch(script:getDraft():getFrame(1),x,y,w,h)
 			Drawing.drawRect(x,y,w,h)
-			Drawing.setAlpha(0.3)
+			Drawing.setAlpha(a*0.3)
 			if self:isEnabled() then Drawing.setAlpha(0.5) end
 			Drawing.setColor(br,bg,bb)
 			do
-				local a=Drawing.getAlpha()
+				local aa=0.5
+				if not self:isEnabled() then aa=0.3 end
 				local ttt2=(Runtime.getTime()-tt2)/200
 				if (self:getTouchPoint() or self:isMouseOver()) and self:isEnabled() then ii2=1 else ii2=0 end
 				if ii2==1 then tt2=Runtime.getTime() end
 				if not TheoTown.SETTINGS.uiAnimations then ttt2=1 end
-				if ii2==1 then Drawing.setAlpha(1) else Drawing.setAlpha(0.5+(0.5*(1-math.min(1,ttt2)))) end
-				local ss=1 if isPressed() then s,ss=4,3 else s=2 end
+				if ii2==1 then Drawing.setAlpha(a) else Drawing.setAlpha(a*(aa+(0.5*(1-math.min(1,ttt2))))) end
+				local ss=1
+				do
+					if isPressed() and ii3==0 then ii3=1 tt3=Runtime.getTime() end
+					if (not isPressed()) and ii3==1 then ii3=0 tt3=Runtime.getTime() end
+					local ttt3=(Runtime.getTime()-tt3)/200
+					ttt3=math.min(1,ttt3)
+					if isPressed() then ttt3=1-ttt3 end
+					s,ss=2+(2*(1-ttt3)),1+(2*(1-ttt3))
+				end
 				drawOutline(x,y,w,h,ss)
 			end
 			local ttt=(Runtime.getTime()-tt)/200
 			if self:isTouchPointInFocus() and self:isEnabled() then ii=1 else ii=0 end
 			if ii==1 then tt=Runtime.getTime() end
 			if not TheoTown.SETTINGS.uiAnimations then ttt=1 end
-			if ii==1 then Drawing.setAlpha(0.3) else Drawing.setAlpha(0.3*(1-ttt)) end
+			if ii==1 then Drawing.setAlpha(a*0.3) else Drawing.setAlpha(a*(0.3*(1-ttt))) end
 			--Drawing.drawNinePatch(script:getDraft():getFrame(1),x,y,w,h)
 			Drawing.drawRect(x,y,w,h)
-			Drawing.reset()
+			Drawing.setColor(r,g,b)
+			Drawing.setAlpha(a)
 		end
 	}
 end
@@ -710,7 +733,10 @@ addIcon=function(self,tbl)
 		h=tbl.height or tbl.h,
 		onInit=function(self,...)
 			self:setTouchThrough(true)
-			function self:getIcon() return icon end
+			function self:getIcon(a) if a then return icon else
+				local icon=icon if type(icon)=="function" then pcall(function() icon=icon() end) end
+				return tonumber(icon) or 0
+			end end
 			function self:setIcon(v) icon=v end
 			function self:getAlignment(x,y) return ax,ay end
 			function self:setAlignment(x,y) ax,ay=x,y end
@@ -724,8 +750,8 @@ addIcon=function(self,tbl)
 				local iw,ih=Drawing.getImageSize(icon)
 				local hx,hy=Drawing.getImageHandle(icon)
 				local sx,sy=Drawing.getScale()
-				local s=math.min(1,w/iw,h/ih) Drawing.setScale(s,s)
-				Drawing.drawImage(icon,x+(hx*s)+(w*ax)-((iw*s)*ax),y+(hy*s)+(h*ay)-((ih*s)*ay))
+				local s=math.min(1,w/iw,h/ih) Drawing.setScale(sx*s,sy*y)
+				Drawing.drawImage(icon,x+(hx*(sx*s))+(w*ax)-((iw*(sx*s))*ax),y+(hy*(sx*s))+(h*ay)-((ih*(sx*s))*ay))
 				Drawing.setScale(sx,sy)
 			end
 		end
@@ -743,7 +769,10 @@ addLabel=function(self,tbl)
 		h=tbl.height or tbl.h,
 		onInit=function(self,...)
 			self:setTouchThrough(true)
-			function self:getText() return text end
+			function self:getText(a) if a then return text else
+				local text=text if type(text)=="function" then pcall(function() text=text() end) end
+				return tostring(text or type(text)=="nil" and "")
+			end end
 			function self:setText(v) text=v end
 			function self:getColor() if (type(r)=="number") and (type(g)=="number") and (type(b)=="number") then return r,g,b else return autoGetColor() end end
 			function self:setColor(...) r,g,b=... end
@@ -758,11 +787,16 @@ addLabel=function(self,tbl)
 			local font=font if type(font)=="function" then font=font() end
 			local text=text if type(text)=="function" then text=text() end
 			text=tostring(text or type(text)=="nil" and "")
-			Drawing.setColor(self:getColor())
-			local tw,th=Drawing.getTextSize(text,font)
-			local s=math.min(1,w/tw) Drawing.setScale(s,s)
-			Drawing.drawText(text,x+(w*ax)-((tw*s)*ax),y+(h*ay)-((th*s)*ay),font)
-			Drawing.reset()
+			if text:len()>=1 then
+				local r,g,b=Drawing.getColor()
+				local sx,sy=Drawing.getScale()
+				Drawing.setColor(self:getColor())
+				local tw,th=Drawing.getTextSize(text,font)
+				local s=math.min(1,w/tw) Drawing.setScale(s,s)
+				Drawing.drawText(text,x+(w*ax)-((tw*s)*ax),y+(h*ay)-((th*s)*ay),font)
+				Drawing.setColor(r,g,b)
+				Drawing.setScale(sx,sy)
+			end
 		end
 	}
 end
@@ -794,12 +828,12 @@ addTextFrame=function(self,tbl)
 					self:setPosition(0,0)
 				end,
 				onDraw=function(self,x,y,w,hh)
-					Drawing.setClipping(x,y,w,hh)
 					x,y,w,hh=x+1,y+1,w-2,hh-2
+					--Drawing.setClipping(x,y,w,hh)
 					local text=self:getText()
 					local tbl,tbl2={},{}
 					local t,t2="",""
-					if text:len()>=1 then
+					if text:trim():len()>=1 then
 						for v in text:rep(1):gmatch(".") do
 							--v=tbl[i-1]
 							local tw=Drawing.getTextSize(t)
@@ -807,18 +841,18 @@ addTextFrame=function(self,tbl)
 							local tw3=Drawing.getTextSize("-")
 							if (tw>=w-tw2-tw3) then t=t.."-" end
 							tw=Drawing.getTextSize(t)
-							if (v=="\n") or (tw>=w-tw2-tw3) then
-								table.insert(tbl2,t)
-								t=""
-							end
-							t=t..v
+							if (v=="\n") or (tw>=w-tw2-tw3) then table.insert(tbl2,t) t="" end
+							if v~="\n" then t=t..v end
 							t2=t
 							--v=tbl[i]
 						end
 						table.insert(tbl2,t2)
 						h=gth*#tbl2
 						Drawing.setColor(autoGetColor())
-						for i,v in ipairs(tbl2)do Drawing.drawText(v,x,y+yy+(gth*(i-1))) end
+						for i,v in ipairs(tbl2)do
+							local y2=y+yy+(gth*(i-1))
+							if y2>=y-gth and y2<y+hh then Drawing.drawText(v,x,y2) end
+						end
 					end
 					Drawing.resetClipping()
 					Drawing.reset()
@@ -1359,11 +1393,10 @@ createMenu=function(tbl)
 						local pnl="menuPanel"..math.random(100000,999999)
 						local enabled=true
 						if type(v.enabled)~="nil" then enabled=v.enabled end
-						local hotkeys={} if type(v.hotkeys)=="table" then hotkeys=v.hotkeys end
 						local tbl4
 						local tbl2={
 							h=15,
-							onInit=function(self) for _,v in pairs(hotkeys) do self:addHotkey(v) end end,
+							hotkeys=v.hotkeys,
 							onClick=function(self) if enabled and type(v.actions)~="table" then
 								playClickSound()
 								local e,e2=pcall(function() if type(v.onClick)=="function" then v.onClick() end end)
