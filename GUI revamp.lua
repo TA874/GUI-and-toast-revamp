@@ -555,33 +555,22 @@ addPanel=function(...)
 	local self,tbl=...
 	if type(self)=="table" and type(tbl)=="table" then
 		local tbl2=table.copy(tbl)
-		tbl2.onInit=function(self,...)
-			if type(tbl.onInit)=="function" then tbl.onInit(self,...) end
-		end
-		tbl2.onUpdate=function(self,...)
-			if type(tbl.onUpdate)=="function" then tbl.onUpdate(self,...) end
-		end
-		tbl2.onClick=function(self,...)
-			if type(tbl.onClick)=="function" then tbl.onClick(self,...) end
-		end
-		tbl2.onDraw=function(self,x,y,w,h,...)
-			if type(tbl.onDraw)=="function" then tbl.onDraw(self,x,y,w,h,...) else
-				local p2,p3,p4,p5=self:getPadding()
-				x,y,w,h=x-p2,y-p3,w+p2+p4,h+p3+p5
-				Drawing.setColor(giGetColor())
-				--Drawing.drawRect(x,y,w,h)
-				Drawing.setAlpha(0.7)
-				--Drawing.drawNinePatch(script:getDraft():getFrame(1),x,y,w,h)
-				Drawing.drawRect(x,y,w,h)
-				Drawing.setAlpha(0.5)
-				Drawing.setColor(autoGetColor())
-				--Drawing.drawNinePatch(script:getDraft():getFrame(10),x,y,w,h)
-				drawOutline(x,y,w,h)
-				Drawing.resetClipping()
-				Drawing.reset()
-				x,y,w,h=x+p2,y+p3,w-p2-p4,h-p3-p5
-			end
-		end
+		tbl2.onDraw=function(self,x,y,w,h,...) if type(tbl.onDraw)=="f".."unction" then tbl.onDraw(self,x,y,w,h,...) else
+			local p2,p3,p4,p5=self:getPadding()
+			x,y,w,h=x-p2,y-p3,w+p2+p4,h+p3+p5
+			Drawing.setColor(giGetColor())
+			--Drawing.drawRect(x,y,w,h)
+			Drawing.setAlpha(0.7)
+			--Drawing.drawNinePatch(script:getDraft():getFrame(1),x,y,w,h)
+			Drawing.drawRect(x,y,w,h)
+			Drawing.setAlpha(0.5)
+			Drawing.setColor(autoGetColor())
+			--Drawing.drawNinePatch(script:getDraft():getFrame(10),x,y,w,h)
+			drawOutline(x,y,w,h)
+			Drawing.resetClipping()
+			Drawing.reset()
+			x,y,w,h=x+p2,y+p3,w-p2-p4,h-p3-p5
+		end end
 		return self:addCanvas(tbl2)
 	elseif select("#",...)>=2 then error("bad argument #2 table expected, got "..type(tbl))
 	elseif select("#",...)==1 and type(self)=="table" then error("bad argument #2 table expected, got no value")
