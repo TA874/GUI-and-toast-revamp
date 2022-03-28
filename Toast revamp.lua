@@ -352,7 +352,7 @@ local tbl={}
 local s={{1,""}}
 local s2="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 for v in s2:gmatch(".") do table.insert(tbl,v) end
-local i=1 .
+local i=1
 f=function()
 	local ss ss=function(i) if i<=#s then
 		local vv=s[i]
