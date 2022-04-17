@@ -1,0 +1,11 @@
+{
+  "id":"$00000gi",
+  "version":5,
+  "title":"GUI revamp",
+  "text":"",
+  "author":"/",
+  //"thumbnail":"Something.png",
+  "category":false,
+  //"url":"https://forum.theotown.com/",
+  "multiplayer":true
+}
